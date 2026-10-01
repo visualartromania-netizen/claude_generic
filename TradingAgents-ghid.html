@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TradingAgents pe înțeles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* Layout: notă de research în stil „desk” — coloană de lectură + diagramă de flux cu panou de detaliu lângă ea */
+:root{
+  --bg:#F2F4F6; --surface:#FFFFFF; --ink:#13202C; --muted:#56636F; --line:#D5DBE1;
+  --accent:#1D5C86; --accent-soft:#E2EDF5;
+  --bull:#2B7A4B; --bull-soft:#E3F1E8; --bear:#B23D35; --bear-soft:#F7E4E2; --hold:#8A6A12; --hold-soft:#F5EEDA;
+  --code-bg:#0F1A24; --code-fg:#DCE6EE;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E151C; --surface:#16202A; --ink:#E4EAF0; --muted:#97A4B0; --line:#2A3846;
+  --accent:#6FB0DD; --accent-soft:#183247;
+  --bull:#6BC48F; --bull-soft:#173326; --bear:#E9827A; --bear-soft:#3A1E1C; --hold:#D9B65A; --hold-soft:#33291A;
+  --code-bg:#0A1016; --code-fg:#DCE6EE; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E151C; --surface:#16202A; --ink:#E4EAF0; --muted:#97A4B0; --line:#2A3846;
+  --accent:#6FB0DD; --accent-soft:#183247;
+  --bull:#6BC48F; --bull-soft:#173326; --bear:#E9827A; --bear-soft:#3A1E1C; --hold:#D9B65A; --hold-soft:#33291A;
+  --code-bg:#0A1016; --code-fg:#DCE6EE; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:40px 80px;display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;font-stretch:80%;letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:750;font-stretch:85%}
+h3{font-size:1.15rem;font-weight:700;font-stretch:90%}
+p{margin:0;max-width:68ch}
+a{color:var(--accent)}
+code,pre{font-family:var(--f-mono);font-size:.86rem}
+:not(pre)>code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+section{display:flex;flex-direction:column;gap:20px}
+.lead{font-size:1.15rem;color:var(--muted)}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:end}
+.hero .txt{display:flex;flex-direction:column;gap:16px}
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:6px;font-family:var(--f-mono);font-size:.85rem}
+.ticket div{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px dashed var(--line)}
+.ticket div:last-child{border-bottom:0}
+.ticket span:first-child{color:var(--muted)}
+.ticket span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.warn{border-left:3px solid var(--hold);background:var(--hold-soft);padding:12px 16px;border-radius:0 6px 6px 0;max-width:72ch}
+
+/* Flow */
+.flow-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:start}
+.flow{display:flex;flex-direction:column;gap:0}
+.stage{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center}
+.stage-label{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:right}
+.nodes{display:flex;flex-wrap:wrap;gap:8px}
+.conn{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;height:26px}
+.conn i{display:block;width:2px;height:100%;background:var(--line);margin-left:22px}
+.node{font:inherit;font-size:.9rem;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:border-color .15s,background .15s}
+.node:hover{border-color:var(--accent)}
+.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.node[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.node .tag{font-family:var(--f-mono);font-size:.68rem;padding:1px 6px;border-radius:3px;background:var(--bg);color:var(--muted)}
+.node .tag.deep{background:var(--accent);color:var(--surface)}
+.node.bull{border-left:3px solid var(--bull)} .node.bear{border-left:3px solid var(--bear)}
+.vs{font-family:var(--f-display);font-weight:800;font-stretch:75%;color:var(--muted);align-self:center}
+.par{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);width:100%}
+.loop{margin-top:18px;border:1px dashed var(--accent);border-radius:6px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.loop .arrow{font-family:var(--f-mono);color:var(--accent)}
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.detail dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:0;font-size:.88rem}
+.detail dt{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:2px}
+.detail dd{margin:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+/* Rating scale */
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,.9fr);gap:4px}
+.scale div{padding:14px 10px;border-radius:4px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.scale b{font-family:var(--f-display);font-stretch:85%;font-size:1.05rem}
+.scale small{font-size:.75rem;color:var(--muted)}
+.s-buy{background:var(--bull);color:var(--surface)} .s-buy small{color:inherit;opacity:.85}
+.s-ow{background:var(--bull-soft);color:var(--bull)}
+.s-hold{background:var(--hold-soft);color:var(--hold)}
+.s-uw{background:var(--bear-soft);color:var(--bear)}
+.s-sell{background:var(--bear);color:var(--surface)} .s-sell small{color:inherit;opacity:.85}
+.s-rev{border:1px dashed var(--muted);color:var(--muted)}
+
+/* Use cases */
+.uses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.use{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.use .who{font-family:var(--f-mono);font-size:.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+
+/* Paths */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font:inherit;font-weight:600;font-size:.92rem;background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;color:var(--muted);cursor:pointer;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .t{font-family:var(--f-mono);font-size:.72rem;font-weight:400;margin-left:6px}
+.panel{display:flex;flex-direction:column;gap:18px;padding-top:6px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:14px;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--f-display);font-weight:800;font-size:1rem;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+.steps li>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.codebox{position:relative;min-width:0}
+pre{background:var(--code-bg);color:var(--code-fg);padding:14px 16px;border-radius:6px;overflow-x:auto;margin:0;line-height:1.5}
+pre .c{color:#7F95A8}
+.copy{position:absolute;top:8px;right:8px;font:500 .72rem var(--f-mono);background:#22313F;color:#DCE6EE;border:1px solid #34485A;border-radius:4px;padding:3px 8px;cursor:pointer}
+.copy:focus-visible{outline:2px solid var(--accent)}
+
+/* Cost/risk table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:560px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.7rem;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.p-red{background:var(--bear-soft);color:var(--bear)} .p-amb{background:var(--hold-soft);color:var(--hold)} .p-grn{background:var(--bull-soft);color:var(--bull)}
+
+
+/* Trader sections */
+.cando{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cando .col{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.cando .yes{border-top:3px solid var(--bull)} .cando .no{border-top:3px solid var(--bear)}
+.cando ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
+.phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.phases>li{position:relative;padding:0 0 32px 26px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.phases>li:last-child{padding-bottom:0}
+.phases>li::before{content:"";position:absolute;left:-8px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.ph{font-family:var(--f-mono);font-size:.74rem;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;margin:0;font-size:.92rem}
+.kv dt{font-family:var(--f-mono);font-size:.82rem;color:var(--accent)} .kv dd{margin:0}
+@media (max-width:820px){.cando{grid-template-columns:minmax(0,1fr)}}
+
+footer{font-size:.82rem;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+
+@media (max-width:820px){
+  .hero,.flow-grid{grid-template-columns:minmax(0,1fr)}
+  .detail{position:static}
+  .uses{grid-template-columns:minmax(0,1fr)}
+  .stage,.conn{grid-template-columns:minmax(0,1fr)}
+  .stage-label{text-align:left}
+  .conn i{margin-left:12px}
+  .scale{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="txt">
+    <span class="eyebrow">Ghid de repo · TauricResearch/TradingAgents</span>
+    <h1>O firmă de trading simulată, făcută din agenți LLM</h1>
+    <p class="lead">TradingAgents pune mai mulți agenți AI să joace rolurile unei firme de investiții: analiști, cercetători care se contrazic, un trader, o echipă de risc și un portfolio manager. Pentru o acțiune și o dată, produce rapoarte și o decizie finală pe o scală de 5 trepte.</p>
+    <p class="warn"><b>Instrument de cercetare, nu consilier de investiții.</b> Autorii spun explicit că rezultatele variază de la o rulare la alta și nu reprezintă sfat financiar. Folosește-l ca a doua opinie, testată mai întâi pe date istorice, nu ca semnal de cumpărare.</p>
+  </div>
+  <div class="ticket" aria-label="Fișa proiectului">
+    <div><span>Versiune</span><span>0.5.2 · 29.09.2026</span></div>
+    <div><span>Limbaj</span><span>Python ≥ 3.11</span></div>
+    <div><span>Orchestrare</span><span>LangGraph</span></div>
+    <div><span>Licență</span><span>Apache 2.0</span></div>
+    <div><span>LLM-uri</span><span>Anthropic, OpenAI, Google, Bedrock, Ollama +10</span></div>
+    <div><span>Piețe</span><span>tot ce acoperă Yahoo Finance</span></div>
+    <div><span>Lucrare</span><span><a href="https://arxiv.org/abs/2412.20138">arXiv 2412.20138</a></span></div>
+  </div>
+</header>
+
+<section aria-labelledby="flux">
+  <span class="eyebrow">Cum lucrează</span>
+  <h2 id="flux">Drumul unei analize, de la date la decizie</h2>
+  <p class="muted">Apasă pe orice rol ca să vezi ce face, ce model folosește și ce produce.</p>
+  <div class="legend">
+    <span><span class="node" style="pointer-events:none;padding:2px 8px"><span class="tag">quick</span></span> model rapid (ex. Claude Sonnet)</span>
+    <span><span class="node" style="pointer-events:none;padding:2px 8px"><span class="tag deep">deep</span></span> model de raționament (ex. Claude Opus)</span>
+  </div>
+  <div class="flow-grid">
+    <div class="flow" id="flow">
+      <div class="stage"><div class="stage-label">Date</div><div class="nodes">
+        <button class="node" data-k="data">Surse de date</button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Analiști</div><div class="nodes">
+        <span class="par">rulează în paralel ↓</span>
+        <button class="node" data-k="market">Tehnic <span class="tag">quick</span></button>
+        <button class="node" data-k="social">Sentiment <span class="tag">quick</span></button>
+        <button class="node" data-k="news">Știri &amp; macro <span class="tag">quick</span></button>
+        <button class="node" data-k="fund">Fundamental <span class="tag">quick</span></button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Dezbatere</div><div class="nodes">
+        <button class="node bull" data-k="bull">Bull Researcher <span class="tag">quick</span></button>
+        <span class="vs">vs</span>
+        <button class="node bear" data-k="bear">Bear Researcher <span class="tag">quick</span></button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Arbitru</div><div class="nodes">
+        <button class="node" data-k="rm">Research Manager <span class="tag deep">deep</span></button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Execuție</div><div class="nodes">
+        <button class="node" data-k="trader">Trader <span class="tag">quick</span></button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Risc</div><div class="nodes">
+        <button class="node" data-k="aggr">Agresiv <span class="tag">quick</span></button>
+        <button class="node" data-k="cons">Conservator <span class="tag">quick</span></button>
+        <button class="node" data-k="neut">Neutru <span class="tag">quick</span></button></div></div>
+      <div class="conn"><span></span><i></i></div>
+      <div class="stage"><div class="stage-label">Decizie</div><div class="nodes">
+        <button class="node" data-k="pm">Portfolio Manager <span class="tag deep">deep</span></button></div></div>
+      <div class="loop">
+        <button class="node" data-k="memory">Jurnal de memorie</button>
+        <span class="arrow">↺</span>
+        <span class="muted" style="font-size:.88rem">După 5 zile de tranzacționare, compară decizia cu randamentul real și trimite lecția următoarei analize.</span>
+      </div>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+</section>
+
+<section aria-labelledby="rating">
+  <span class="eyebrow">Ce primești la final</span>
+  <h2 id="rating">O decizie pe 5 trepte, plus rapoartele care o justifică</h2>
+  <div class="scale">
+    <div class="s-buy"><b>Buy</b><small>cumpără</small></div>
+    <div class="s-ow"><b>Overweight</b><small>supraponderează</small></div>
+    <div class="s-hold"><b>Hold</b><small>păstrează</small></div>
+    <div class="s-uw"><b>Underweight</b><small>subponderează</small></div>
+    <div class="s-sell"><b>Sell</b><small>vinde</small></div>
+    <div class="s-rev"><b>REVIEW</b><small>ilizibil, necesită om</small></div>
+  </div>
+  <p class="muted">Dacă Portfolio Manager-ul nu scrie un rând clar <code>Rating: X</code>, sistemul nu presupune „Hold”. Marchează decizia ca <b>REVIEW</b>, adică trebuie verificată de un om. Fiecare raport începe cu data, versiunea, modelele și sursele de date folosite, ca să poți reproduce rularea.</p>
+</section>
+
+<section aria-labelledby="uses">
+  <span class="eyebrow">Ce poți face cu el</span>
+  <h2 id="uses">Patru utilizări realiste</h2>
+  <div class="uses">
+    <article class="use"><span class="who">Analiză punctuală</span><h3>Un ticker, o dată, un raport complet</h3><p>Rulezi pentru <code>NVDA</code> la o anumită dată și primești raportul tehnic, cel de sentiment, de știri și cel fundamental, dezbaterea, planul traderului și decizia. E util ca „a doua opinie” structurată, mai ales pentru rapoartele intermediare.</p></article>
+    <article class="use"><span class="who">Backtest</span><h3>Verifici dacă sistemul decide bine în timp</h3><p><code>tradingagents backtest NVDA,AAPL --start … --every 7</code> rulează aceeași analiză pe o grilă de date și o notează după randamentul realizat față de indicele de referință. Datele sunt „point-in-time”: o analiză datată în trecut vede doar ce era public atunci.</p></article>
+    <article class="use"><span class="who">Portofoliu propriu</span><h3>Recomandări raportate la ce deții</h3><p>Îi dai un JSON cu cash și poziții (<code>--portfolio my_book.json</code>), iar traderul, echipa de risc și PM-ul lucrează pe portofoliul tău real, nu pe unul generic.</p></article>
+    <article class="use"><span class="who">Crypto și alte piețe</span><h3>BTC, ETH și burse din afara SUA</h3><p>Merge cu <code>BTC-USD</code> și <code>ETH-USD</code>. Formatul <code>BTCUSDT</code> folosit de exchange-uri e convertit automat. Funcționează și cu Londra (<code>.L</code>), Frankfurt (<code>.DE</code>), Tokyo (<code>.T</code>) și altele. Pentru fiecare bursă își alege singur indicele cu care compară randamentul.</p></article>
+  </div>
+</section>
+
+<section aria-labelledby="impl">
+  <span class="eyebrow">Implementare</span>
+  <h2 id="impl">Trei căi, în ordinea în care le-aș parcurge</h2>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-a" aria-controls="p-a" aria-selected="true">A · Rulează-l <span class="t">~30 min</span></button>
+    <button class="tab" role="tab" id="t-b" aria-controls="p-b" aria-selected="false">B · Integrează în stack-ul tău <span class="t">1–2 zile</span></button>
+    <button class="tab" role="tab" id="t-c" aria-controls="p-c" aria-selected="false">C · Cu Claude Code <span class="t">prompt gata făcut</span></button>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-a" aria-labelledby="t-a">
+    <p>Varianta recomandată pe Windows este Docker Desktop, ca să nu te încurci cu versiunile de Python.</p>
+    <ol class="steps">
+      <li><div><b>Clonează și pregătește fișierul de chei</b>
+        <div class="codebox"><pre>git clone https://github.com/TauricResearch/TradingAgents.git
+cd TradingAgents
+copy .env.example .env      <span class="c"># pe Linux/macOS: cp</span></pre></div></div></li>
+      <li><div><b>Configurează-l pe Claude în <code>.env</code></b>
+        <div class="codebox"><pre>ANTHROPIC_API_KEY=sk-ant-...
+TRADINGAGENTS_LLM_PROVIDER=anthropic
+TRADINGAGENTS_DEEP_THINK_LLM=claude-opus-5-5
+TRADINGAGENTS_QUICK_THINK_LLM=claude-sonnet-5
+TRADINGAGENTS_ANTHROPIC_EFFORT=high
+TRADINGAGENTS_OUTPUT_LANGUAGE=Romanian
+FRED_API_KEY=...            <span class="c"># gratuit, pentru date macro (opțional)</span></pre></div>
+        <p class="muted" style="font-size:.88rem">Opus 5.5 are implicit effort <code>medium</code>, de aceea îl setez explicit. Pentru teste ieftine poți pune <code>claude-haiku-4-5</code> ca model quick.</p></div></li>
+      <li><div><b>Prima rulare, fără întrebări interactive</b>
+        <div class="codebox"><pre>docker compose run --rm tradingagents --ticker NVDA --date 2026-09-30 --analysts market,news,fundamentals --save --no-show</pre></div>
+        <p class="muted" style="font-size:.88rem">Fără argumente pornește interfața interactivă în terminal. Rapoartele ajung în volumul <code>tradingagents_data</code>. Dacă le vrei într-un folder local, setează <code>TRADINGAGENTS_DATA_DIR=./data</code>.</p></div></li>
+      <li><div><b>Fără Docker (venv)</b>
+        <div class="codebox"><pre>py -3.13 -m venv .venv &amp;&amp; .venv\Scripts\activate
+pip install .
+tradingagents</pre></div></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-b" aria-labelledby="t-b" hidden>
+    <p>Proiectul e scris în Python, iar stack-ul tău e React + Node. Cea mai curată soluție este să nu-l rescrii, ci să-l împachetezi ca serviciu. O analiză durează minute, așa că o tratezi ca job asincron, nu ca un request sincron.</p>
+    <ol class="steps">
+      <li><div><b>Un microserviciu FastAPI în jurul pachetului</b>
+        <div class="codebox"><pre><span class="c"># service.py — pip install fastapi uvicorn .</span>
+import uuid
+from fastapi import FastAPI, BackgroundTasks
+from tradingagents.default_config import DEFAULT_CONFIG
+from tradingagents.graph.trading_graph import TradingAgentsGraph
+
+app, jobs = FastAPI(), {}
+
+def run(job_id, ticker, date):
+    ta = TradingAgentsGraph(config=DEFAULT_CONFIG.copy())
+    state, rating = ta.propagate(ticker, date)
+    ta.save_reports(state, ticker)
+    jobs[job_id] = {"status": "done", "rating": rating,
+                    "decision": state.get("final_trade_decision")}
+
+@app.post("/analyses")
+def start(ticker: str, date: str, bg: BackgroundTasks):
+    job_id = str(uuid.uuid4()); jobs[job_id] = {"status": "running"}
+    bg.add_task(run, job_id, ticker, date)
+    return {"id": job_id}
+
+@app.get("/analyses/{job_id}")
+def status(job_id: str):
+    return jobs.get(job_id, {"status": "unknown"})</pre></div>
+        <p class="muted" style="font-size:.88rem"><code>final_trade_decision</code> și <code>final_rating</code> sunt cheile din <code>tradingagents/agents/state.py</code>. În producție, <code>jobs</code> trece într-o bază de date sau coadă.</p></div></li>
+      <li><div><b>Backend-ul Node pornește job-ul și face polling</b>
+        <div class="codebox"><pre>const { id } = await fetch(`${TA_URL}/analyses?ticker=NVDA&amp;date=2026-09-30`, { method: "POST" }).then(r =&gt; r.json());
+<span class="c">// React: polling la 5–10 s pe GET /analyses/:id, apoi afișezi rating + rapoarte</span></pre></div></div></li>
+      <li><div><b>Opțional: notificare în Teams</b>
+        <p>Când job-ul se termină, trimiți rezumatul și rating-ul pe un canal prin Graph (<code>POST /teams/{id}/channels/{id}/messages</code>). Ai deja autentificarea rezolvată, așa că rămâne doar formatarea mesajului.</p></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-c" aria-labelledby="t-c" hidden>
+    <p>Lipește promptul de mai jos într-o sesiune Claude Code deschisă în folderul clonat. Promptul cere să verifice înainte să presupună și să se oprească înainte de orice cost mare.</p>
+    <div class="codebox"><button class="copy" type="button" data-copy="cc-prompt">Copiază</button><pre id="cc-prompt">Lucrăm în repo-ul TradingAgents (Python, LangGraph). Obiectiv: să-l rulez cu Claude și apoi să-l expun ca serviciu HTTP pentru o aplicație React + Node.
+
+1. Citește README.md, CHANGELOG.md (secțiunea 0.5.2) și tradingagents/default_config.py. Rezumă-mi în 10 rânduri fluxul agenților și ce chei .env trebuie setate pentru provider-ul anthropic.
+2. Creează .env din .env.example cu: TRADINGAGENTS_LLM_PROVIDER=anthropic, DEEP=claude-opus-5-5, QUICK=claude-sonnet-5, ANTHROPIC_EFFORT=high, OUTPUT_LANGUAGE=Romanian. Nu scrie chei reale; lasă placeholder.
+3. Rulează testele unitare (pytest, fără -m integration) și raportează rezultatul.
+4. Verifică în tradingagents/agents/structured.py și în langchain-anthropic instalat ce metodă folosește with_structured_output pentru Anthropic. Claude Opus 5.5 respinge tool_choice forțat (any/tool) cu 400. Dacă metoda îl forțează, propune o soluție (method="json_schema" sau fallback pe claude-opus-5) ÎNAINTE de a modifica ceva.
+5. Verifică dacă există prompt caching (cache_control) pentru Anthropic. Dacă nu, propune unde s-ar pune breakpoint-urile (system prompt-urile stabile ale fiecărui agent) și estimează impactul. Nu implementa fără confirmarea mea.
+6. Scrie service.py cu FastAPI: POST /analyses (ticker, date) pornește un job în fundal, GET /analyses/{id} întoarce status, rating și calea rapoartelor.
+7. Înainte de orice rulare reală care consumă API, oprește-te și cere-mi confirmarea. Prima rulare: un singur ticker, analysts=market,news, max_debate_rounds=1.</pre></div>
+  </div>
+</section>
+
+<section aria-labelledby="atentie">
+  <span class="eyebrow">Înainte să te apuci</span>
+  <h2 id="atentie">Ce am găsit în cod și merită știut</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Subiect</th><th>Ce înseamnă pentru tine</th><th>Gravitate</th></tr></thead>
+    <tbody>
+      <tr><td>Fără prompt caching</td><td>Am căutat <code>cache_control</code> în tot pachetul și nu apare nicăieri. Fiecare agent își retrimite instrucțiunile integral la fiecare apel. Cu Claude, să pui cache pe system prompt-urile stabile e cea mai simplă economie disponibilă, și ar putea fi chiar o contribuție la repo.</td><td><span class="pill p-amb">cost</span></td></tr>
+      <tr><td>Opus 5.5 și output structurat</td><td>Research Manager, Trader și Portfolio Manager folosesc <code>with_structured_output</code>. Opus 5.5 respinge <code>tool_choice</code> forțat. Nu am verificat ce metodă alege LangChain pentru Anthropic, așa că testează la prima rulare. Dacă apare o eroare 400, pune temporar <code>claude-opus-5</code> ca model deep.</td><td><span class="pill p-red">de verificat</span></td></tr>
+      <tr><td>Volumul de apeluri</td><td>Cu setările implicite: 4 analiști (fiecare cu bucle de unelte, până la 20 de runde), 2 replici bull/bear, Research Manager, Trader, 3 replici de risc și PM. Asta înseamnă cel puțin ~12 apeluri LLM pe analiză, plus buclele analiștilor. Un backtest înmulțește totul cu tickere × date. Măsoară costul pe o singură rulare înainte de orice grilă.</td><td><span class="pill p-amb">cost</span></td></tr>
+      <tr><td>Acțiuni românești (BVB)</td><td>Merge doar dacă Yahoo Finance are tickerul. Sufixul pentru București nu l-am verificat. Bursa română nu e în harta de indici de referință, deci setează manual <code>TRADINGAGENTS_BENCHMARK_TICKER</code>. Datele fundamentale „as filed” vin doar de la SEC, pentru companiile listate în SUA.</td><td><span class="pill p-amb">limitare</span></td></tr>
+      <tr><td>Rezultate nedeterministe</td><td>Două rulări pentru aceeași dată pot da decizii diferite. Modelele de raționament ignoră <code>temperature</code>. Ia-o ca opinie de cercetare, nu ca semnal.</td><td><span class="pill p-grn">by design</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="limite">
+  <span class="eyebrow">Pentru un trader</span>
+  <h2 id="limite">Ce face și ce nu face</h2>
+  <div class="cando">
+    <div class="col yes"><h3>Face</h3><ul>
+      <li>Cercetare completă pe un instrument, la o dată: tehnic, știri, sentiment, fundamentale</li>
+      <li>O decizie argumentată pe 5 trepte, cu dezbaterea care a produs-o</li>
+      <li>Recomandări raportate la cash-ul și pozițiile tale, dacă i le dai</li>
+      <li>Notarea propriilor decizii în timp: hit rate și alpha pe fiecare rating</li>
+      <li>Învață din decizii anterioare pe același ticker</li>
+    </ul></div>
+    <div class="col no"><h3>Nu face</h3><ul>
+      <li><b>Nu se conectează la niciun broker</b> și nu plasează ordine. Execuția rămâne la tine.</li>
+      <li>Nu e intraday. Lucrează pe date zilnice, iar rezultatul se măsoară implicit la 5 zile de tranzacționare.</li>
+      <li>Nu administrează stop-loss, take-profit sau poziții deschise după decizie</li>
+      <li>Nu garantează aceeași decizie la două rulări identice</li>
+    </ul></div>
+  </div>
+</section>
+
+<section aria-labelledby="rutina">
+  <span class="eyebrow">Cum l-aș folosi</span>
+  <h2 id="rutina">De la test la a doua opinie, în trei etape</h2>
+  <p>Regula de bază: nu pui bani pe decizii pe care nu le-ai văzut notate pe trecut. Etapele de mai jos costă doar apeluri API, nu capital.</p>
+  <ol class="phases">
+    <li><span class="ph">Etapa 1 · 1–2 săptămâni</span><h3>Backtest pe tickerele tale</h3>
+      <div class="codebox"><pre>tradingagents backtest NVDA,AAPL,MSFT --start 2026-03-01 --end 2026-08-01 --every 14 --analysts market,news,fundamentals</pre></div>
+      <p>Rezultatul e un tabel pe rating, cu trei coloane:</p>
+      <dl class="kv"><dt>count</dt><dd>câte decizii au intrat în fiecare treaptă</dd>
+      <dt>hit_rate</dt><dd>cât de des a nimerit direcția față de indice: Buy urmat de alpha pozitiv, Sell urmat de alpha negativ</dd>
+      <dt>mean_alpha</dt><dd>randamentul mediu peste indice în fereastra de deținere</dd></dl>
+      <p class="muted">Dacă Buy și Sell nu diferă clar ca alpha mediu, sistemul nu-ți aduce un avantaj pe acele instrumente. Ai aflat-o ieftin. Pornește cu o grilă mică (3 tickere × 10 date = 30 de analize) și măsoară costul înainte să o mărești.</p></li>
+    <li><span class="ph">Etapa 2 · 4–8 săptămâni</span><h3>Paper trading pe watchlist</h3>
+      <p>Rulezi în fiecare luni pentru lista ta, notezi ce ai fi făcut și compari cu ce s-a întâmplat. Jurnalul de memorie face o parte din muncă: la rularea următoare calculează singur randamentul realizat.</p>
+      <div class="codebox"><button class="copy" type="button" data-copy="ps-watch">Copiază</button><pre id="ps-watch"><span class="c"># watchlist.ps1 — programat în Task Scheduler, luni la 08:00</span>
+$date = (Get-Date).AddDays(-1).ToString("yyyy-MM-dd")
+foreach ($t in "NVDA","AAPL","MSFT","BTC-USD") {
+  tradingagents --ticker $t --date $date --analysts market,news,fundamentals --save --no-show
+}</pre></div>
+      <p class="muted">Data e cea a ultimei zile de tranzacționare încheiate, ca analiza să lucreze pe o lumânare completă.</p></li>
+    <li><span class="ph">Etapa 3 · după ce cifrele o justifică</span><h3>A doua opinie, nu pilot automat</h3>
+      <p>Folosește decizia ca filtru: confirmă sau pune la îndoială o idee pe care o ai deja. Citește mai ales <b>argumentele bear</b>. Acolo e valoarea reală, pentru că îți arată riscurile pe care le-ai trecut cu vederea. Mărimea poziției și stop-loss-ul rămân regulile tale, nu ale agentului.</p></li>
+  </ol>
+</section>
+
+<section aria-labelledby="cost">
+  <span class="eyebrow">Costuri</span>
+  <h2 id="cost">Cum ții factura sub control</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Pârghie</th><th>Setare</th><th>Efect</th></tr></thead>
+    <tbody>
+      <tr><td>Mai puțini analiști</td><td><code>--analysts market,news,fundamentals</code></td><td>Sentimentul din social media e cel mai zgomotos. Pentru acțiuni mari îl poți scoate primul.</td></tr>
+      <tr><td>Model quick mai ieftin</td><td><code>TRADINGAGENTS_QUICK_THINK_LLM=claude-haiku-4-5</code></td><td>Majoritatea apelurilor sunt „quick”. Doar Research Manager și Portfolio Manager folosesc modelul deep.</td></tr>
+      <tr><td>O singură rundă de dezbatere</td><td><code>MAX_DEBATE_ROUNDS=1</code>, <code>MAX_RISK_ROUNDS=1</code></td><td>Sunt deja valorile implicite. Fiecare rundă în plus adaugă 2 apeluri la dezbatere și 3 la risc.</td></tr>
+      <tr><td>Plafon pe uneltele analiștilor</td><td><code>TRADINGAGENTS_MAX_TOOL_ROUNDS=8</code></td><td>Implicit e 20. Limitează buclele lungi de căutare.</td></tr>
+      <tr><td>Checkpoint la rulări lungi</td><td><code>--checkpoint</code></td><td>Dacă o rulare pică la jumătate, o reiei de unde a rămas, fără să plătești din nou etapele terminate.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted">N-am pus o sumă în dolari pe analiză, pentru că depinde mult de cât caută analiștii. Fă o rulare, uită-te în consola Anthropic la tokenii consumați și înmulțește cu numărul de analize din backtest.</p>
+</section>
+
+<footer>Pe baza codului din <a href="https://github.com/TauricResearch/TradingAgents">TauricResearch/TradingAgents</a>, versiunea 0.5.2, citit pe 1 octombrie 2026. Nu reprezintă sfat de investiții.</footer>
+</div>
+
+<script>
+const D={
+ data:{t:"Surse de date",m:"—",d:"Yahoo Finance pentru prețuri, indicatori și știri. SEC EDGAR pentru situații financiare exact cum au fost depuse, fără cont. FRED pentru macro (cheie gratuită), Polymarket pentru piețe de predicție, StockTwits și Reddit pentru sentiment. Alpha Vantage e opțional.",o:"Date filtrate „point-in-time”: o analiză datată în trecut nu vede nimic publicat după acea dată.",c:"data_vendors în default_config.py"},
+ market:{t:"Analist tehnic",m:"quick",d:"Calculează indicatori precum MACD și RSI și citește evoluția prețului. Cifrele exacte sunt luate dintr-un snapshot verificat, ca să nu fie inventate.",o:"Raport tehnic",c:"--analysts market"},
+ social:{t:"Analist de sentiment",m:"quick",d:"Adună titluri de știri, postări StockTwits și Reddit într-o singură evaluare a stării pieței pe termen scurt. Cu TYPESAFE_API_KEY, filtrează postările irelevante.",o:"Raport de sentiment",c:"--analysts social"},
+ news:{t:"Analist de știri și macro",m:"quick",d:"Știrile companiei plus știri globale: Fed, BCE, inflație, geopolitică, petrol. Căutările macro sunt configurabile.",o:"Raport de știri",c:"global_news_queries"},
+ fund:{t:"Analist fundamental",m:"quick",d:"Bilanț, cont de profit, cash flow, tranzacții ale insiderilor. Pentru SUA folosește cifrele așa cum erau depuse la data analizei, chiar dacă au fost retratate ulterior.",o:"Raport fundamental",c:"fundamental_data = sec_edgar,yfinance"},
+ bull:{t:"Bull Researcher",m:"quick",d:"Construiește cazul pentru cumpărare pornind de la cele patru rapoarte și răspunde argumentelor bear.",o:"Argumente pro",c:"max_debate_rounds (implicit 1 → câte o replică)"},
+ bear:{t:"Bear Researcher",m:"quick",d:"Construiește cazul împotrivă: riscuri, evaluare prea mare, semnale negative. Contrazice direct argumentele bull.",o:"Argumente contra",c:"max_debate_rounds"},
+ rm:{t:"Research Manager",m:"deep",d:"Arbitrul dezbaterii. Cântărește argumentele și scrie un plan de investiții cu rating pe 5 trepte, ca output structurat.",o:"Plan de investiții + rating",c:"deep_think_llm"},
+ trader:{t:"Trader",m:"quick",d:"Transformă planul într-o propunere concretă: direcție, mărime, moment. Ancorat în prețul real și, dacă i-l dai, în portofoliul tău.",o:"Propunere de tranzacție",c:"--portfolio my_book.json"},
+ aggr:{t:"Analist de risc agresiv",m:"quick",d:"Susține asumarea de risc pentru randament mai mare și contestă prudența excesivă.",o:"Replică de risc",c:"max_risk_discuss_rounds"},
+ cons:{t:"Analist de risc conservator",m:"quick",d:"Apără capitalul: volatilitate, lichiditate, scenarii negative.",o:"Replică de risc",c:"max_risk_discuss_rounds"},
+ neut:{t:"Analist de risc neutru",m:"quick",d:"Caută echilibrul între cele două poziții și propune ajustări.",o:"Replică de risc",c:"max_risk_discuss_rounds"},
+ pm:{t:"Portfolio Manager",m:"deep",d:"Decizia finală. Citește propunerea traderului, dezbaterea de risc și lecțiile din memorie, apoi aprobă sau respinge.",o:"Rating final: Buy … Sell sau REVIEW",c:"propagate() → (state, rating)"},
+ memory:{t:"Jurnal de memorie",m:"—",d:"Fiecare decizie se adaugă în ~/.tradingagents/memory/trading_memory.md. La următoarea rulare pe același ticker, calculează randamentul realizat și alpha față de indicele de referință, scrie o reflecție scurtă și o trimite Portfolio Manager-ului.",o:"Lecții acumulate între rulări",c:"holding_period_days = 5"}
+};
+const det=document.getElementById('detail'), btns=[...document.querySelectorAll('.node[data-k]')];
+function show(k){
+  const n=D[k]; if(!n) return;
+  btns.forEach(b=>b.setAttribute('aria-pressed', b.dataset.k===k?'true':'false'));
+  const model=n.m==='deep'?'Model de raționament (deep_think_llm)':n.m==='quick'?'Model rapid (quick_think_llm)':'Fără LLM';
+  det.innerHTML=`<span class="eyebrow">Rol selectat</span><h3>${n.t}</h3><p>${n.d}</p>
+  <dl><dt>Model</dt><dd>${model}</dd><dt>Produce</dt><dd>${n.o}</dd><dt>Setare</dt><dd><code>${n.c}</code></dd></dl>`;
+}
+btns.forEach(b=>b.addEventListener('click',()=>show(b.dataset.k)));
+show('pm');
+
+const tabs=[...document.querySelectorAll('.tab')];
+function sel(t){tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);document.getElementById(x.getAttribute('aria-controls')).hidden=!on;});
+  try{localStorage.setItem('ta-tab',t.id)}catch(e){}}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>sel(t));t.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];n.focus();sel(n);}})});
+try{const s=localStorage.getItem('ta-tab');const t=s&&document.getElementById(s);if(t)sel(t)}catch(e){}
+
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const el=document.getElementById(b.dataset.copy);
+  navigator.clipboard.writeText(el.textContent).then(()=>{b.textContent='Copiat';setTimeout(()=>b.textContent='Copiază',1600)})
+  .catch(()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selectat — Ctrl+C';});
+}));
+</script>
+</body>
+</html>
