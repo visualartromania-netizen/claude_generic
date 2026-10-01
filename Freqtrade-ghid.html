@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Freqtrade pe înțeles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* Layout: manual de operare pentru un bot — bucla motorului în centru, apoi traseul de la idee la bani reali ca o „scară de risc” */
+:root{
+  --bg:#F1F3F8; --surface:#FFFFFF; --ink:#151B2E; --muted:#5A6378; --line:#D6DBE7;
+  --accent:#3A4FC4; --accent-soft:#E4E8FA;
+  --up:#1F7A4D; --up-soft:#E1F2E9; --down:#BC3B32; --down-soft:#F8E3E1; --warn:#946A0C; --warn-soft:#F6EED8;
+  --code-bg:#121829; --code-fg:#DEE4F5; --code-dim:#8892B0; --code-key:#9DB1FF;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1320; --surface:#181E30; --ink:#E6E9F4; --muted:#9AA3BC; --line:#2B3350;
+  --accent:#8E9DFF; --accent-soft:#232B52;
+  --up:#62C795; --up-soft:#15302A; --down:#F08A80; --down-soft:#3A1F21; --warn:#E2BC5C; --warn-soft:#352C17;
+  --code-bg:#0A0E19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1320; --surface:#181E30; --ink:#E6E9F4; --muted:#9AA3BC; --line:#2B3350;
+  --accent:#8E9DFF; --accent-soft:#232B52;
+  --up:#62C795; --up-soft:#15302A; --down:#F08A80; --down-soft:#3A1F21; --warn:#E2BC5C; --warn-soft:#352C17;
+  --code-bg:#0A0E19; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:40px 80px;display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.08}
+h1{font-size:clamp(2.2rem,5.2vw,3.7rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:750;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0;max-width:68ch}
+a{color:var(--accent)}
+code,pre{font-family:var(--f-mono);font-size:.84rem}
+:not(pre)>code{background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+section{display:flex;flex-direction:column;gap:20px}
+.lead{font-size:1.18rem;color:var(--muted)}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:end}
+.hero .txt{display:flex;flex-direction:column;gap:16px}
+.spec{background:var(--surface);border:1px solid var(--line);border-radius:8px;font-family:var(--f-mono);font-size:.82rem}
+.spec div{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line)}
+.spec div:last-child{border-bottom:0}
+.spec span:first-child{color:var(--muted)}
+.spec span:last-child{text-align:right}
+.danger{border-left:3px solid var(--down);background:var(--down-soft);padding:12px 16px;border-radius:0 6px 6px 0;max-width:72ch}
+
+/* Contrast strip */
+.vs2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.vs2 .c{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.vs2 .c.me{border-color:var(--accent)}
+.vs2 .k{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+/* Loop */
+.loop-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:start}
+.ring{position:relative;max-width:460px;width:100%;aspect-ratio:1;margin-inline:auto}
+.ring svg{width:100%;height:100%;display:block}
+.ring .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none}
+.ring .center b{font-family:var(--f-display);font-size:1.5rem;display:block}
+.ring .center span{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.steplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:st}
+.steplist button{font:inherit;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 14px;cursor:pointer;color:var(--ink);display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start}
+.steplist li{counter-increment:st}
+.steplist button::before{content:counter(st);font-family:var(--f-mono);font-size:.78rem;color:var(--accent);padding-top:2px}
+.steplist button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.steplist button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.steplist .t{font-weight:700}
+.steplist .d{display:block;font-size:.9rem;color:var(--muted);margin-top:2px}
+.steplist .fn{font-family:var(--f-mono);font-size:.76rem;color:var(--accent)}
+
+/* Ladder */
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;align-items:end}
+.rung{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.rung .lvl{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.rung .lvl i{display:block;height:100%}
+.rung .n{font-family:var(--f-mono);font-size:.7rem;color:var(--muted)}
+.rung h3{font-size:1rem}
+.rung p{font-size:.86rem;color:var(--muted)}
+.rung .cost{font-family:var(--f-mono);font-size:.72rem;margin-top:auto}
+.money0{color:var(--up)} .money1{color:var(--warn)} .money2{color:var(--down)}
+
+/* Code */
+.codebox{position:relative;min-width:0}
+pre{background:var(--code-bg);color:var(--code-fg);padding:14px 16px;border-radius:6px;overflow-x:auto;margin:0;line-height:1.55}
+pre .c{color:var(--code-dim)} pre .k{color:var(--code-key)}
+.copy{position:absolute;top:8px;right:8px;font:500 .72rem var(--f-mono);background:#232B45;color:#DEE4F5;border:1px solid #39446A;border-radius:4px;padding:3px 8px;cursor:pointer}
+.anatomy{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+.notes{display:flex;flex-direction:column;gap:12px}
+.note{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;font-size:.93rem}
+.note b{font-family:var(--f-mono);font-size:.78rem;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:4px;height:fit-content}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font:inherit;font-weight:600;font-size:.95rem;background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;color:var(--muted);cursor:pointer;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{display:flex;flex-direction:column;gap:18px;padding-top:6px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:32px minmax(0,1fr);gap:14px;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--f-display);font-weight:800;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center;font-size:.95rem}
+.steps li>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+
+/* Table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:600px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.7rem;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.p-red{background:var(--down-soft);color:var(--down)} .p-amb{background:var(--warn-soft);color:var(--warn)} .p-grn{background:var(--up-soft);color:var(--up)}
+
+/* Combo */
+.combo{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:stretch}
+.combo .box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.combo .arr{align-self:center;font-family:var(--f-mono);color:var(--accent);font-size:1.2rem}
+.combo .k{font-family:var(--f-mono);font-size:.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+
+footer{font-size:.84rem;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+
+@media (max-width:860px){
+  .hero,.loop-grid,.anatomy,.vs2{grid-template-columns:minmax(0,1fr)}
+  .ladder{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .combo{grid-template-columns:minmax(0,1fr)}
+  .combo .arr{transform:rotate(90deg);justify-self:start;margin-left:12px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="txt">
+    <span class="eyebrow">Ghid de repo · freqtrade/freqtrade</span>
+    <h1>Un bot care chiar plasează ordine pe exchange</h1>
+    <p class="lead">Freqtrade e un bot open-source pentru trading crypto. Tu scrii strategia ca reguli în Python (indicatori, semnale de intrare și de ieșire). Botul o testează pe date istorice, o rulează pe bani virtuali și, când ești gata, o execută pe contul tău de exchange, 24 de ore din 24.</p>
+    <p class="danger"><b>Aici sunt bani reali în joc.</b> Spre deosebire de TradingAgents, Freqtrade execută ordine. Autorii spun clar că e software educațional și că nu trebuie să riști bani pe care nu-ți permiți să-i pierzi. Strategia de exemplu inclusă e doar o demonstrație, nu o strategie profitabilă.</p>
+  </div>
+  <div class="spec" aria-label="Fișa proiectului">
+    <div><span>Versiune</span><span>2026.10-dev (lansări lunare)</span></div>
+    <div><span>Limbaj</span><span>Python ≥ 3.11 + TA-Lib</span></div>
+    <div><span>Piețe</span><span>doar crypto: spot și futures</span></div>
+    <div><span>Exchange-uri</span><span>Binance, Bybit, OKX, Kraken, Gate, Hyperliquid…</span></div>
+    <div><span>Control</span><span>FreqUI (web), Telegram, REST API</span></div>
+    <div><span>Stocare</span><span>SQLite</span></div>
+    <div><span>Licență</span><span>GPL-3.0</span></div>
+  </div>
+</header>
+
+<section aria-labelledby="diferenta">
+  <span class="eyebrow">Unde se așază</span>
+  <h2 id="diferenta">Freqtrade execută, TradingAgents analizează</h2>
+  <div class="vs2">
+    <div class="c"><span class="k">TradingAgents</span><h3>Analist</h3><p class="small">Agenți LLM citesc știri, fundamentale și sentiment și scriu o opinie argumentată. Fără broker, fără ordine, cam o decizie pe zi. Costul vine din tokenii consumați.</p></div>
+    <div class="c me"><span class="k">Freqtrade</span><h3>Executant</h3><p class="small">Reguli deterministe pe lumânări (5m, 1h, 1d…). Se conectează la exchange prin API, plasează ordine, administrează stop-loss-ul și ține evidența profitului. Nu folosește LLM-uri. Costul vine din comisioane și din pierderile strategiei.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="bucla">
+  <span class="eyebrow">Cum funcționează</span>
+  <h2 id="bucla">Bucla motorului, la fiecare câteva secunde</h2>
+  <p class="muted">Pașii de mai jos se repetă în ordinea asta cât timp botul e pornit. Apasă pe un pas ca să-l vezi în cerc. Funcțiile scrise cu albastru sunt cele pe care le scrii tu în strategie.</p>
+  <div class="loop-grid">
+    <div class="ring" id="ring" aria-hidden="true">
+      <svg viewBox="0 0 400 400" id="ringsvg"></svg>
+      <div class="center"><div><b>~5 s</b><span>process_throttle_secs</span></div></div>
+    </div>
+    <ol class="steplist" id="steps"></ol>
+  </div>
+</section>
+
+<section aria-labelledby="scara">
+  <span class="eyebrow">De la idee la bani reali</span>
+  <h2 id="scara">Șase trepte, în ordine, fără scurtături</h2>
+  <p>Fiecare treaptă filtrează strategiile slabe înainte să coste bani. Majoritatea strategiilor ar trebui să cadă la treptele 2–5, iar asta înseamnă că procesul funcționează.</p>
+  <div class="ladder">
+    <div class="rung"><span class="n">1</span><div class="lvl"><i style="width:8%;background:var(--up)"></i></div><h3>Strategie</h3><p>Scrii regulile în Python sau pornești de la un șablon.</p><span class="cost money0">risc 0</span></div>
+    <div class="rung"><span class="n">2</span><div class="lvl"><i style="width:16%;background:var(--up)"></i></div><h3>Backtest</h3><p>Rulezi pe date istorice descărcate de pe exchange, cu comisioane incluse.</p><span class="cost money0">risc 0</span></div>
+    <div class="rung"><span class="n">3</span><div class="lvl"><i style="width:24%;background:var(--up)"></i></div><h3>Verificare bias</h3><p><code>lookahead-analysis</code> verifică dacă strategia „trișează” uitându-se în viitor.</p><span class="cost money0">risc 0</span></div>
+    <div class="rung"><span class="n">4</span><div class="lvl"><i style="width:40%;background:var(--warn)"></i></div><h3>Hyperopt</h3><p>Optimizează parametrii. Folosit greșit, produce strategii potrivite perfect pe trecut și inutile pe viitor.</p><span class="cost money1">risc de overfitting</span></div>
+    <div class="rung"><span class="n">5</span><div class="lvl"><i style="width:60%;background:var(--warn)"></i></div><h3>Dry-run</h3><p>Rulează live pe prețuri reale, cu portofel virtual. Ține-l cel puțin câteva săptămâni.</p><span class="cost money1">bani virtuali</span></div>
+    <div class="rung"><span class="n">6</span><div class="lvl"><i style="width:100%;background:var(--down)"></i></div><h3>Live, sumă mică</h3><p><code>"dry_run": false</code>, cu o sumă pe care o poți pierde integral. Crești doar după rezultate.</p><span class="cost money2">bani reali</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="anatomie">
+  <span class="eyebrow">Ce scrii tu</span>
+  <h2 id="anatomie">Anatomia unei strategii</h2>
+  <div class="anatomy">
+    <div class="codebox"><pre><span class="k">class</span> RsiSimplu(IStrategy):
+    timeframe = <span class="k">"1h"</span>                 <span class="c"># ①</span>
+    minimal_roi = {<span class="k">"0"</span>: 0.04, <span class="k">"240"</span>: 0.02}  <span class="c"># ②</span>
+    stoploss = -0.05                  <span class="c"># ③</span>
+    trailing_stop = True
+
+    <span class="k">def</span> populate_indicators(self, df, metadata):  <span class="c"># ④</span>
+        df[<span class="k">"rsi"</span>] = ta.RSI(df, timeperiod=14)
+        df[<span class="k">"ema200"</span>] = ta.EMA(df, timeperiod=200)
+        <span class="k">return</span> df
+
+    <span class="k">def</span> populate_entry_trend(self, df, metadata):  <span class="c"># ⑤</span>
+        df.loc[(df[<span class="k">"rsi"</span>] &lt; 30) &amp; (df[<span class="k">"close"</span>] &gt; df[<span class="k">"ema200"</span>]),
+               <span class="k">"enter_long"</span>] = 1
+        <span class="k">return</span> df
+
+    <span class="k">def</span> populate_exit_trend(self, df, metadata):   <span class="c"># ⑥</span>
+        df.loc[df[<span class="k">"rsi"</span>] &gt; 70, <span class="k">"exit_long"</span>] = 1
+        <span class="k">return</span> df</pre></div>
+    <div class="notes">
+      <div class="note"><b>①</b><span>Mărimea lumânării. Pe <code>5m</code> faci multe tranzacții și plătești multe comisioane. Pe <code>1h</code> sau <code>4h</code> zgomotul e mai mic.</span></div>
+      <div class="note"><b>②</b><span>Ieșire pe profit în funcție de timp: 4% oricând, 2% după 240 de minute.</span></div>
+      <div class="note"><b>③</b><span>Stop-loss la -5% față de intrare. Cu <code>trailing_stop</code>, urcă odată cu prețul.</span></div>
+      <div class="note"><b>④</b><span>Calculezi indicatorii pe tot tabelul de lumânări (pandas + TA-Lib).</span></div>
+      <div class="note"><b>⑤</b><span>Marchezi rândurile unde vrei să intri. Aici: RSI supravândut, dar doar în trend ascendent.</span></div>
+      <div class="note"><b>⑥</b><span>Marchezi rândurile unde vrei să ieși. Botul se ocupă de ordine, de comisioane și de evidență.</span></div>
+      <p class="muted small">Exemplul e ilustrativ, nu o strategie recomandată. Șablonul oficial complet e <code>freqtrade/templates/sample_strategy.py</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="impl">
+  <span class="eyebrow">Implementare</span>
+  <h2 id="impl">Pornire, de pe Windows sau pe un server</h2>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t-a" aria-controls="p-a" aria-selected="true">A · Local, dry-run</button>
+    <button class="tab" role="tab" id="t-b" aria-controls="p-b" aria-selected="false">B · Pe VPS, 24/7</button>
+    <button class="tab" role="tab" id="t-c" aria-controls="p-c" aria-selected="false">C · Cu Claude Code</button>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-a" aria-labelledby="t-a">
+    <p>Cu Docker Desktop nu trebuie să instalezi TA-Lib manual, care pe Windows e partea cea mai dificilă. După instalarea Docker, repornește calculatorul, altfel apar probleme de rețea greu de explicat.</p>
+    <ol class="steps">
+      <li><div><b>Folder de lucru și imaginea oficială</b>
+        <div class="codebox"><pre>mkdir ft_userdata &amp;&amp; cd ft_userdata
+curl https://raw.githubusercontent.com/freqtrade/freqtrade/stable/docker-compose.yml -o docker-compose.yml
+docker compose pull
+docker compose run --rm freqtrade create-userdir --userdir user_data
+docker compose run --rm freqtrade new-config --config user_data/config.json</pre></div>
+        <p class="muted small"><code>new-config</code> îți pune câteva întrebări. Alege <b>dry-run: yes</b> și activează FreqUI.</p></div></li>
+      <li><div><b>Verifică setările de bani în <code>config.json</code></b>
+        <div class="codebox"><pre>{
+  <span class="k">"dry_run"</span>: true,
+  <span class="k">"dry_run_wallet"</span>: 1000,
+  <span class="k">"stake_currency"</span>: "USDT",
+  <span class="k">"stake_amount"</span>: 30,
+  <span class="k">"max_open_trades"</span>: 3,
+  <span class="k">"trading_mode"</span>: "spot"
+}</pre></div>
+        <p class="muted small">Astea sunt valorile din exemplul oficial pentru Binance. Cu <code>spot</code> nu folosești levier. Rămâi pe spot până înțelegi bine botul.</p></div></li>
+      <li><div><b>Descarcă date și rulează un backtest</b>
+        <div class="codebox"><pre>docker compose run --rm freqtrade download-data --pairs BTC/USDT ETH/USDT --exchange binance -t 1h --timerange 20250101-
+docker compose run --rm freqtrade backtesting --strategy SampleStrategy -i 1h --timerange 20250101-20260901
+docker compose run --rm freqtrade lookahead-analysis --strategy SampleStrategy -i 1h --timerange 20260101-20260901</pre></div></div></li>
+      <li><div><b>Pornește botul în dry-run și deschide interfața</b>
+        <div class="codebox"><pre>docker compose up -d
+<span class="c"># apoi în browser: http://localhost:8080</span>
+docker compose logs -f</pre></div></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-b" aria-labelledby="t-b" hidden>
+    <p>Un bot de trading trebuie să ruleze continuu, iar laptopul tău se închide. Cerințele recomandate sunt modeste: 2 GB RAM, 2 vCPU, 1 GB disc. Orice VPS mic Linux e suficient.</p>
+    <ol class="steps">
+      <li><div><b>Ceasul sincronizat (NTP)</b><p>Exchange-urile resping cererile cu ora greșită. Pe Ubuntu, <code>timedatectl</code> trebuie să arate <code>System clock synchronized: yes</code>.</p></div></li>
+      <li><div><b>Nu expune FreqUI pe internet</b><p>FreqUI nu are HTTPS din fabrică. Accesează-l printr-un tunel SSH, iar pe server lasă portul legat doar la localhost:</p>
+        <div class="codebox"><pre>ssh -L 8080:localhost:8080 user@vps-ul-tau</pre></div></div></li>
+      <li><div><b>Cheia API de exchange, cu permisiuni minime</b><p>Doar citire și trading. <b>Niciodată retrageri</b> (withdraw). Restricționează cheia la IP-ul VPS-ului, dacă exchange-ul permite.</p></div></li>
+      <li><div><b>Notificări pe telefon</b><p>Telegram e varianta oficială: <code>/status</code>, <code>/profit</code>, <code>/daily</code>, iar <code>/forceexit all</code> e frâna de urgență. Prin webhook-uri generice poți trimite evenimentele și într-un canal Teams.</p></div></li>
+      <li><div><b>Actualizări</b>
+        <div class="codebox"><pre>docker compose pull &amp;&amp; docker compose up -d</pre></div>
+        <p class="muted small">Citește changelog-ul înainte. Branch-ul <code>stable</code> e cel sigur, <code>develop</code> poate avea schimbări care strică ceva.</p></div></li>
+    </ol>
+  </div>
+
+  <div class="panel" role="tabpanel" id="p-c" aria-labelledby="t-c" hidden>
+    <p>Promptul de mai jos se lipește într-o sesiune Claude Code deschisă în folderul <code>ft_userdata</code>. Îl ține pe Claude în zona fără bani reali și îl pune să verifice bias-ul înainte să dea vreo cifră.</p>
+    <div class="codebox"><button class="copy" type="button" data-copy="cc-prompt">Copiază</button><pre id="cc-prompt">Lucrăm cu Freqtrade (Docker, folderul curent e ft_userdata). Regulă fermă: rămânem pe "dry_run": true. Nu modifica asta și nu adăuga chei API reale.
+
+1. Citește user_data/config.json și spune-mi pe scurt: exchange, trading_mode, stake, max_open_trades, pairlist.
+2. Descarcă date 1h pentru BTC/USDT, ETH/USDT, SOL/USDT de la 2025-01-01.
+3. Scrie în user_data/strategies/ o strategie simplă de trend (EMA 50/200 + RSI ca filtru), cu stoploss și minimal_roi explicite și comentarii în română.
+4. Rulează backtesting pe 2025-01-01 – 2026-06-30 și raportează: număr de tranzacții, profit total, max drawdown, win rate, comparat cu buy&amp;hold pe aceeași perioadă.
+5. Rulează lookahead-analysis și recursive-analysis pe strategie. Dacă apare bias, repară-l înainte de orice altceva.
+6. Testează separat pe 2026-07-01 – 2026-09-30 (date nevăzute la scriere). Dacă rezultatele diferă mult de pasul 4, spune-mi explicit că e semn de overfitting.
+7. Nu rula hyperopt fără să-mi propui întâi spațiul de parametri și funcția de loss.</pre></div>
+  </div>
+</section>
+
+<section aria-labelledby="riscuri">
+  <span class="eyebrow">Înainte de primul leu</span>
+  <h2 id="riscuri">Capcanele care costă bani</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Capcană</th><th>Ce se întâmplă</th><th>Cum te aperi</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-red">overfitting</span></td><td>Hyperopt găsește parametri care ar fi câștigat perfect anul trecut și pierd de acum înainte.</td><td>Ține deoparte o perioadă pe care nu optimizezi și testează pe ea la final. Puțini parametri, multe tranzacții.</td></tr>
+      <tr><td><span class="pill p-red">lookahead bias</span></td><td>Strategia folosește, fără să-ți dai seama, date din lumânarea următoare. Backtestul arată superb, live pierde.</td><td><code>lookahead-analysis</code> și <code>recursive-analysis</code>, rulate pe fiecare strategie.</td></tr>
+      <tr><td><span class="pill p-amb">backtest ≠ live</span></td><td>Live, verificările rulează la ~5 secunde, în backtest o dată pe lumânare. Slippage-ul și ordinele neexecutate nu apar în simulare.</td><td>Dry-run de câteva săptămâni și compară cifrele cu backtestul pe aceeași perioadă.</td></tr>
+      <tr><td><span class="pill p-red">futures / levier</span></td><td>Lichidarea poate șterge poziția întreagă într-o mișcare bruscă.</td><td>Rămâi pe <code>spot</code> la început. Citește pagina oficială despre levier înainte de futures.</td></tr>
+      <tr><td><span class="pill p-amb">exchange din UE</span></td><td>Nu orice entitate a unui exchange e disponibilă pentru rezidenți din România.</td><td>Repo-ul suportă explicit entitățile europene: Bybit EU, MyOKX (OKX EEA), Gate EU, Kraken. Verifică pe site-ul exchange-ului pe care îl folosești.</td></tr>
+      <tr><td><span class="pill p-amb">fiscalitate</span></td><td>Câștigurile din crypto se declară în România, iar botul poate face sute de tranzacții pe an.</td><td>Exportă istoricul (SQLite / <code>show-trades</code>) și verifică regulile curente cu un contabil. Nu ți-am verificat cotele actuale.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="combo">
+  <span class="eyebrow">Cele două repo-uri împreună</span>
+  <h2 id="combo">TradingAgents ca filtru pentru Freqtrade</h2>
+  <p>Merge legat de raportul anterior: analiza LLM, lentă și de context, decide <em>dacă</em> ai voie să intri pe o monedă, iar regulile rapide din Freqtrade decid <em>când</em>.</p>
+  <div class="combo">
+    <div class="box"><span class="k">Zilnic</span><b>TradingAgents</b><span class="small muted">rulează pe BTC-USD, ETH-USD și scrie rating-ul într-un fișier JSON</span></div>
+    <div class="arr">→</div>
+    <div class="box"><span class="k">Fișier comun</span><b>ratings.json</b><span class="small muted"><code>{"BTC/USDT": "Overweight", "ETH/USDT": "Hold"}</code></span></div>
+    <div class="arr">→</div>
+    <div class="box"><span class="k">La fiecare lumânare</span><b>Freqtrade</b><span class="small muted">în <code>confirm_trade_entry()</code> refuză intrările long pe monedele fără Buy/Overweight</span></div>
+  </div>
+  <p class="muted small">Limitarea e serioasă: filtrul nu poate fi testat în backtest-ul Freqtrade decât dacă ai rating-uri istorice. Le poți genera cu <code>tradingagents backtest</code>, care respectă datele cunoscute la fiecare dată, dar costul în tokeni crește cu fiecare zi din istoric. Aș testa ideea în dry-run, nu în backtest.</p>
+</section>
+
+<footer>Pe baza codului și documentației din <a href="https://github.com/freqtrade/freqtrade">freqtrade/freqtrade</a> (branch develop, 2026.10-dev), citite pe 1 octombrie 2026. Nu reprezintă sfat de investiții.</footer>
+</div>
+
+<script>
+const S=[
+ ["Încarcă pozițiile deschise","din baza SQLite",""],
+ ["Calculează lista de perechi","whitelist fix sau dinamic (volum, volatilitate)",""],
+ ["Descarcă lumânările noi","o singură dată pe lumânare, nu la fiecare buclă",""],
+ ["Calculează indicatorii","RSI, EMA, MACD… pe tot tabelul","populate_indicators()"],
+ ["Marchează semnalele","unde ai intra și unde ai ieși","populate_entry_trend() / populate_exit_trend()"],
+ ["Actualizează ordinele deschise","timeouts, ajustări de preț","adjust_order_price()"],
+ ["Verifică ieșirile","stop-loss, ROI, semnal de ieșire","custom_stoploss() / custom_exit()"],
+ ["Verifică locurile libere","max_open_trades",""],
+ ["Plasează intrări noi","prețul, mărimea și confirmarea finală","custom_stake_amount() / confirm_trade_entry()"]
+];
+const svg=document.getElementById('ringsvg'), list=document.getElementById('steps');
+const NS='http://www.w3.org/2000/svg', cx=200, cy=200, r=150, n=S.length;
+const css=getComputedStyle(document.documentElement);
+function mk(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+svg.appendChild(mk('circle',{cx,cy,r,fill:'none',stroke:'var(--line)','stroke-width':2}));
+const dots=[];
+S.forEach((s,i)=>{
+  const a=-Math.PI/2+i*2*Math.PI/n, x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+  const g=mk('g',{});
+  const c=mk('circle',{cx:x,cy:y,r:17,fill:'var(--surface)',stroke:'var(--line)','stroke-width':2});
+  const t=mk('text',{x,y:y+5,'text-anchor':'middle','font-family':'JetBrains Mono, monospace','font-size':14,fill:'var(--ink)'});
+  t.textContent=i+1; g.append(c,t); svg.appendChild(g); dots.push(c);
+  const li=document.createElement('li'), b=document.createElement('button');
+  b.type='button'; b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<span><span class="t">${s[0]}</span><span class="d">${s[1]}${s[2]?` · <span class="fn">${s[2]}</span>`:''}</span></span>`;
+  b.addEventListener('click',()=>pick(i)); li.appendChild(b); list.appendChild(li);
+});
+const arrow=mk('path',{d:'',fill:'none',stroke:'var(--accent)','stroke-width':4,'stroke-linecap':'round'});
+svg.insertBefore(arrow,svg.children[1]);
+function pick(i){
+  [...list.querySelectorAll('button')].forEach((b,j)=>b.setAttribute('aria-pressed',j===i));
+  dots.forEach((d,j)=>{d.setAttribute('fill',j===i?'var(--accent)':j<i?'var(--accent-soft)':'var(--surface)');d.setAttribute('stroke',j<=i?'var(--accent)':'var(--line)');
+    d.nextSibling.setAttribute('fill',j===i?'var(--surface)':'var(--ink)');});
+  const a0=-Math.PI/2, a1=-Math.PI/2+i*2*Math.PI/n;
+  if(i===0){arrow.setAttribute('d','');return;}
+  const large=(a1-a0)>Math.PI?1:0;
+  arrow.setAttribute('d',`M ${cx+r*Math.cos(a0)} ${cy+r*Math.sin(a0)} A ${r} ${r} 0 ${large} 1 ${cx+r*Math.cos(a1)} ${cy+r*Math.sin(a1)}`);
+}
+pick(4);
+
+const tabs=[...document.querySelectorAll('.tab')];
+function sel(t){tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);document.getElementById(x.getAttribute('aria-controls')).hidden=!on;});
+  try{localStorage.setItem('ft-tab',t.id)}catch(e){}}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>sel(t));t.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){const n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];n.focus();sel(n);}})});
+try{const s=localStorage.getItem('ft-tab');const t=s&&document.getElementById(s);if(t)sel(t)}catch(e){}
+
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const el=document.getElementById(b.dataset.copy);
+  navigator.clipboard.writeText(el.textContent).then(()=>{b.textContent='Copiat';setTimeout(()=>b.textContent='Copiază',1600)})
+  .catch(()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selectat — Ctrl+C';});
+}));
+</script>
+</body>
+</html>
